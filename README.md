@@ -1,3 +1,3 @@
 # hookspammer, ready to spam!
 
-Tool to send webhook events (mostly GitHub ones)
+Tool to send webhook events (mostly GitHub ones) for tests.
