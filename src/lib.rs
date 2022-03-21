@@ -41,29 +41,6 @@ pub struct Args {
     pub count: usize,
 }
 
-pub async fn send_random_events<E: Dummy<Faker> + Serialize>(
-    client: &Client,
-    secret: Option<&String>,
-    url: &str,
-    event_type: EventType,
-    count: usize,
-) -> color_eyre::Result<()> {
-    for _ in 0..count {
-        match send_random_event::<E>(client, secret, url, event_type).await {
-            Err(e) => {
-                eprintln!("[ERROR] {}", e);
-            }
-            Ok(resp) => {
-                let status = resp.status();
-                let code = status.as_u16();
-                println!("[OK/{code}] {}", resp.text().await?);
-            }
-        }
-    }
-
-    Ok(())
-}
-
 async fn send_random_event<E: Dummy<Faker> + Serialize>(
     client: &Client,
     secret: Option<&String>,
@@ -84,7 +61,6 @@ async fn send_random_event<E: Dummy<Faker> + Serialize>(
     }
 
     let response = builder.body(serialized_data).send().await?;
-
     Ok(response)
 }
 
@@ -101,29 +77,24 @@ pub async fn send_random_event_for_event_type(
     secret: Option<&String>,
     url: &str,
     event_type: EventType,
-    count: usize,
-) -> color_eyre::Result<()> {
+) -> color_eyre::Result<Response> {
     match event_type {
         EventType::CheckSuite => {
-            send_random_events::<CheckSuiteEvent>(client, secret, url, event_type, count).await
+            send_random_event::<CheckSuiteEvent>(client, secret, url, event_type).await
         }
         EventType::IssueComment => {
-            send_random_events::<IssueCommentEvent>(client, secret, url, event_type, count).await
+            send_random_event::<IssueCommentEvent>(client, secret, url, event_type).await
         }
-        EventType::Ping => {
-            send_random_events::<PingEvent>(client, secret, url, event_type, count).await
-        }
-        EventType::Push => {
-            send_random_events::<PushEvent>(client, secret, url, event_type, count).await
-        }
+        EventType::Ping => send_random_event::<PingEvent>(client, secret, url, event_type).await,
+        EventType::Push => send_random_event::<PushEvent>(client, secret, url, event_type).await,
         EventType::PullRequest => {
-            send_random_events::<PullRequestEvent>(client, secret, url, event_type, count).await
+            send_random_event::<PullRequestEvent>(client, secret, url, event_type).await
         }
         EventType::Review => {
-            send_random_events::<ReviewEvent>(client, secret, url, event_type, count).await
+            send_random_event::<ReviewEvent>(client, secret, url, event_type).await
         }
         EventType::Unknown => {
-            send_random_events::<UnknownEvent>(client, secret, url, event_type, count).await
+            send_random_event::<UnknownEvent>(client, secret, url, event_type).await
         }
     }
 }
@@ -132,7 +103,50 @@ pub async fn send_random_event_with_random_event_type(
     client: &Client,
     secret: Option<&String>,
     url: &str,
+) -> color_eyre::Result<Response> {
+    send_random_event_for_event_type(client, secret, url, Faker.fake()).await
+}
+
+pub async fn send_random_events_for_event_type(
+    client: &Client,
+    secret: Option<&String>,
+    url: &str,
+    event_type: EventType,
     count: usize,
 ) -> color_eyre::Result<()> {
-    send_random_event_for_event_type(client, secret, url, EventType::random(), count).await
+    for _ in 0..count {
+        let response = send_random_event_for_event_type(client, secret, url, event_type).await;
+        handle_response(response).await?;
+    }
+
+    Ok(())
+}
+
+pub async fn send_random_events_with_random_event_types(
+    client: &Client,
+    secret: Option<&String>,
+    url: &str,
+    count: usize,
+) -> color_eyre::Result<()> {
+    for _ in 0..count {
+        let response = send_random_event_with_random_event_type(client, secret, url).await;
+        handle_response(response).await?;
+    }
+
+    Ok(())
+}
+
+async fn handle_response(response: color_eyre::Result<Response>) -> color_eyre::Result<()> {
+    match response {
+        Err(e) => {
+            eprintln!("[ERROR] {}", e);
+        }
+        Ok(resp) => {
+            let status = resp.status();
+            let code = status.as_u16();
+            println!("[OK/{code}] {}", resp.text().await?);
+        }
+    }
+
+    Ok(())
 }

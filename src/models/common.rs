@@ -4,7 +4,7 @@ use fake::{
     faker::lorem::en::{Sentence, Word},
     Dummy, Fake, Faker,
 };
-use rand::{prelude::SliceRandom, thread_rng, Rng};
+use rand::{prelude::SliceRandom, Rng};
 use serde::Serialize;
 use strum::{Display, EnumString};
 
@@ -52,7 +52,7 @@ pub enum GitBackend {
     GitLab,
 }
 
-#[derive(Debug, Clone, Copy, EnumString, Display)]
+#[derive(Debug, Clone, Copy, EnumString, Display, Dummy)]
 #[strum(serialize_all = "snake_case")]
 pub enum EventType {
     CheckSuite,
@@ -62,22 +62,6 @@ pub enum EventType {
     PullRequest,
     Review,
     Unknown,
-}
-
-impl EventType {
-    pub fn random() -> Self {
-        let mut rng = thread_rng();
-        let choices = &[
-            Self::CheckSuite,
-            Self::IssueComment,
-            Self::Ping,
-            Self::Push,
-            Self::PullRequest,
-            Self::Review,
-            Self::Unknown,
-        ];
-        choices.choose(&mut rng).copied().unwrap()
-    }
 }
 
 pub struct DummyRepository;
