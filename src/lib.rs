@@ -32,6 +32,10 @@ pub struct Args {
     #[clap(short('i'), long, default_value = "http://127.0.0.1:3000")]
     pub server_ip: String,
 
+    /// Webhook URL
+    #[clap(short('u'), long, default_value = "/webhook")]
+    pub webhook_url: String,
+
     /// Event type
     #[clap(short('e'), long)]
     pub event_type: Option<EventType>,

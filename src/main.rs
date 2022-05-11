@@ -10,7 +10,7 @@ async fn main() -> color_eyre::Result<()> {
 
     let args = Args::parse();
     let client = create_client();
-    let url = format!("{}/webhook/github", args.server_ip);
+    let url = format!("{}{}", args.server_ip, args.webhook_url);
     let secret = args.webhook_secret.as_ref();
 
     if let Some(event_type) = args.event_type {
